@@ -3,4 +3,5 @@ numpy
 matplotlib
 tensorflow
 scikit-learn
+nltk
 #-e .
