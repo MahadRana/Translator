@@ -50,12 +50,12 @@ class DataIngestion:
             return np.array(cleaned)
         except Exception as e:
             raise CustomException(e,sys)
-    def preprocess(self):
+    def preprocess(self, n = 75000):
         try:
             doc = self.load_doc()
             pairs = self.to_pairs(doc)
             data = self.clean_data(pairs)
-            return data
+            return data[0:n, :]
         except Exception as e:
             raise CustomException(e,sys)
     

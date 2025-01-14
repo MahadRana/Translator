@@ -15,10 +15,12 @@ class ModelPredict:
             evaluate_values = load_model(evaluate_values_path)
             self.target_token_index = evaluate_values["target_token_index"]
             self.max_decoder_seq_length = evaluate_values["max_decoder_seq_length"]
+            self.max_encoder_seq_length = evaluate_values["max_encoder_seq_length"]
             self.encoder_model = load_model(encoder_model_path)
             self.decoder_model = load_model(decoder_model_path)
             self.input_tokenizer = load_object(input_tokenizer_path)
             self.num_decoder_tokens = evaluate_values["num_decoder_tokens"]
+            self.num_encoder_tokens =  evaluate_values["num_encoder_tokens"]
             self.reverse_target_char_index = dict((i, char) for char, i in self.target_token_index.items())
         except Exception as e:
             raise CustomException(e,sys)
@@ -60,22 +62,22 @@ class ModelPredict:
             return decoded_sentence
         except Exception as e:
             raise CustomException(e,sys)
-    def sentence_onehot(self, input_sentence, max_len, vocab_size):
+    def sentence_onehot(self, input_sentence):
         try:
         # Tokenize the input sentence
             word_index = self.input_tokenizer.word_index
             seq = self.input_tokenizer.texts_to_sequences([input_sentence])
             self.input_tokenizer.word_index = word_index
         # Pad the sequence to match max_len
-            added_seq = pad_sequences(seq, maxlen=max_len, padding='post')
-            onehot_seq = np.zeros((1, max_len, vocab_size))
-            onehot_seq[0] = to_categorical(added_seq, num_classes=vocab_size)
+            added_seq = pad_sequences(seq, maxlen=self.max_encoder_seq_length, padding='post')
+            onehot_seq = np.zeros((1,self.max_encoder_seq_length, self.num_encoder_tokens))
+            onehot_seq[0] = to_categorical(added_seq, num_classes=self.num_encoder_tokens)
             return onehot_seq
         except Exception as e:
             raise CustomException(e,sys)         
-    def predict(self,input_sentence, max_len, vocab_size):
+    def predict(self,input_sentence):
         try: 
-            sequence = self.sentence_onehot(input_sentence, max_len, vocab_size)
+            sequence = self.sentence_onehot(input_sentence)
             return self.decode_sequence(sequence[0])
         except Exception as e:
             raise CustomException(e,sys)    

@@ -6,6 +6,7 @@ from src.logger import logging
 from keras.models import Model
 from keras.layers import Input, LSTM, Dense, Bidirectional, Concatenate
 from keras import optimizers
+import tensorflow as tf
 
 class ModelTrainer:
     def __init__(self, data_dict, model_save_path, encoder_save_path, decoder_save_path):
@@ -66,8 +67,9 @@ class ModelTrainer:
     def compile_fit_save(self):
         try:
             encoder_model, decoder_model, model = self.seq2seq()
+            tf.debugging.set_log_device_placement(True)
             model.compile(optimizer=optimizers.Adam(learning_rate=.001), loss='categorical_crossentropy')
-            model.fit([self.data_dict["train"]["encoder_input"], self.data_dict["train"]["decoder_input"]], self.data_dict["train"]["decoder_target"], batch_size=64, epochs=50)
+            model.fit([self.data_dict["train"]["encoder_input"], self.data_dict["train"]["decoder_input"]], self.data_dict["train"]["decoder_target"], batch_size=128, epochs=50)
             encoder_model.save(self.encoder_save_path)
             decoder_model.save(self.decoder_save_path)
             model.save(self.model_save_path)

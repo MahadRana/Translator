@@ -5,4 +5,4 @@ tensorflow
 scikit-learn
 nltk
 dill
-#-e .
+-e .

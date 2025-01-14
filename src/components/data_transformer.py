@@ -60,7 +60,9 @@ class DataTransformer:
 
             evaluate_values = {"target_token_index":target_tokenizer.word_index,
                                "max_decoder_seq_length":self.data_dict["max_lengths"]["decoder"],
-                               "num_decoder_tokens": num_decoder_tokens_train
+                               "max_encoder_seq_length":self.data_dict["max_lengths"]["encoder"],
+                               "num_decoder_tokens": num_decoder_tokens_train,
+                               "num_encoder_tokens": num_encoder_tokens_train
             }      
             save_object(self.evaluate_values_path, evaluate_values)
             encoder_input_data_train = self.onehot_encode(input_train_seqs, self.data_dict["max_lengths"]["encoder"], num_encoder_tokens_train)
