@@ -7,15 +7,16 @@ from keras.models import Model
 from keras.layers import Input, LSTM, Dense, Bidirectional, Concatenate
 from keras import optimizers
 
-class Model_Trainer:
-    def __init__(self, data_dict, model_save_path):
+class ModelTrainer:
+    def __init__(self, data_dict, model_save_path, encoder_save_path, decoder_save_path):
         """
         Initialize the ModelTrainer with training data and save path.
         """
         self.data_dict = data_dict
         self.model_save_path = model_save_path
+        self.encoder_save_path = encoder_save_path
+        self.decoder_save_path = decoder_save_path
         self.latent_dim = 256 
-        self.model = None
     def encoder(self):
         try:
             encoder_inputs = Input(shape=(None, self.data_dict["tokens"]["encoder"]), name='encoder_inputs')
@@ -40,7 +41,7 @@ class Model_Trainer:
             decoder_lstm = LSTM(new_latent_dim, return_sequences=True, return_state=True, dropout=0.5, name='decoder_lstm')
             decoder_lstm_outputs, state_h, state_c = decoder_lstm(decoder_input_x, initial_state=[decoder_input_h, decoder_input_c])
 
-            decoder_dense = Dense(self.num_decoder_tokens, activation='softmax', name='decoder_dense')
+            decoder_dense = Dense(self.data_dict["tokens"]["decoder"], activation='softmax', name='decoder_dense')
             decoder_outputs = decoder_dense(decoder_lstm_outputs)
 
             decoder_model = Model(inputs=[decoder_input_x, decoder_input_h, decoder_input_c], outputs=[decoder_outputs, state_h, state_c], name='decoder')
@@ -65,10 +66,11 @@ class Model_Trainer:
     def compile_fit_save(self):
         try:
             encoder_model, decoder_model, model = self.seq2seq()
-            self.model = model
-            self.model.compile(optimizer=optimizers.Adam(learning_rate=.001), loss='categorical_crossentropy')
-            self.model.fit([self.data_dict["train"]["encoder_input"], self.data_dict["train"]["decoder_input"]], self.data_dict["train"]["decoder_target"], batch_size=64, epochs=50)
-            model.save(os.path.join(self.model_save_path, 'seq2seq.h5'))
+            model.compile(optimizer=optimizers.Adam(learning_rate=.001), loss='categorical_crossentropy')
+            model.fit([self.data_dict["train"]["encoder_input"], self.data_dict["train"]["decoder_input"]], self.data_dict["train"]["decoder_target"], batch_size=64, epochs=50)
+            encoder_model.save(self.encoder_save_path)
+            decoder_model.save(self.decoder_save_path)
+            model.save(self.model_save_path)
             return encoder_model, decoder_model, model
         except Exception as e:
             raise CustomException(e,sys)

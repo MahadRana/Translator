@@ -69,8 +69,8 @@ class DataIngestion:
             target_texts_train = ['\t' + text + '\n' for text in train_data[:, 1]]
             input_texts_test = test_data[:, 0]
             target_texts_test = ['\t' + text + '\n' for text in test_data[:, 1]]
-            max_encoder_seq_length = max(len(line) for line in input_texts_train + input_texts_test)
-            max_decoder_seq_length = max(len(line) for line in target_texts_train + target_texts_test)
+            max_encoder_seq_length = max(max(len(line) for line in input_texts_train), max(len(line) for line in input_texts_test))
+            max_decoder_seq_length = max(max(len(line) for line in target_texts_train), max(len(line) for line in target_texts_test))
             return {
                 "train": {"input_texts": input_texts_train, "target_texts": target_texts_train},
                 "test": {"input_texts": input_texts_test, "target_texts": target_texts_test},

@@ -1,21 +1,27 @@
 import sys
-import os
 from src.exception import CustomException
 from src.logger import logging
 import numpy as np
-from nltk.translate.bleu_score import sentence_bleu
-from statistics import mean
+from keras.models import load_model
+from src.utils import load_object
+from keras.preprocessing.sequence import pad_sequences
+from keras.utils import to_categorical
 
 
-class Model_Evaluate:
-    def __init__(self, target_token_index, max_decoder_seq_length, encoder_model, decoder_model, num_decoder_tokens, encoder_input_data_test, target_texts_test):
-        self.target_token_index = target_token_index
-        self.max_decoder_seq_length = max_decoder_seq_length
-        self.encoder_model = encoder_model
-        self.decoder_model = decoder_model 
-        self.num_decoder_tokens = num_decoder_tokens
-        self.reverse_target_char_index = dict((i, char) for char, i in self.target_token_index.items())
-        self.encoder_input_data_test = encoder_input_data_test
+
+class ModelPredict:
+    def __init__(self, encoder_model_path, decoder_model_path, input_tokenizer_path, evaluate_values_path):
+        try:
+            evaluate_values = load_model(evaluate_values_path)
+            self.target_token_index = evaluate_values["target_token_index"]
+            self.max_decoder_seq_length = evaluate_values["max_decoder_seq_length"]
+            self.encoder_model = load_model(encoder_model_path)
+            self.decoder_model = load_model(decoder_model_path)
+            self.input_tokenizer = load_object(input_tokenizer_path)
+            self.num_decoder_tokens = evaluate_values["num_decoder_tokens"]
+            self.reverse_target_char_index = dict((i, char) for char, i in self.target_token_index.items())
+        except Exception as e:
+            raise CustomException(e,sys)
     def decode_sequence(self, input_seq):
         try:
             # Encode the input sequence to get the states
@@ -54,18 +60,23 @@ class Model_Evaluate:
             return decoded_sentence
         except Exception as e:
             raise CustomException(e,sys)
-    def average_blue(self):
+    def sentence_onehot(self, input_sentence, max_len, vocab_size):
         try:
-            bleu_scores = []
-            for i in range(100): 
-                translation = self.decode_sequence(self.encoder_input_data_test[i:i+1])
-                truth = self.target_texts_test[i][1:-1]
-                bleu = sentence_bleu([translation], truth)
-                print("BLEU: ", bleu)
-                bleu_scores.append(bleu)
-
-            # Compute average BLEU score
-            avg_bleu = mean(bleu_scores)
-            return avg_bleu
+        # Tokenize the input sentence
+            word_index = self.input_tokenizer.word_index
+            seq = self.input_tokenizer.texts_to_sequences([input_sentence])
+            self.input_tokenizer.word_index = word_index
+        # Pad the sequence to match max_len
+            added_seq = pad_sequences(seq, maxlen=max_len, padding='post')
+            onehot_seq = np.zeros((1, max_len, vocab_size))
+            onehot_seq[0] = to_categorical(added_seq, num_classes=vocab_size)
+            return onehot_seq
         except Exception as e:
-            raise CustomException(e,sys)
+            raise CustomException(e,sys)         
+    def predict(self,input_sentence, max_len, vocab_size):
+        try: 
+            sequence = self.sentence_onehot(input_sentence, max_len, vocab_size)
+            return self.decode_sequence(sequence[0])
+        except Exception as e:
+            raise CustomException(e,sys)    
+            
