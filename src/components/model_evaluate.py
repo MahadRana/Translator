@@ -12,7 +12,7 @@ from keras.utils import to_categorical
 class ModelPredict:
     def __init__(self, encoder_model_path, decoder_model_path, input_tokenizer_path, evaluate_values_path):
         try:
-            evaluate_values = load_model(evaluate_values_path)
+            evaluate_values = load_object(evaluate_values_path)
             self.target_token_index = evaluate_values["target_token_index"]
             self.max_decoder_seq_length = evaluate_values["max_decoder_seq_length"]
             self.max_encoder_seq_length = evaluate_values["max_encoder_seq_length"]
@@ -78,7 +78,7 @@ class ModelPredict:
     def predict(self,input_sentence):
         try: 
             sequence = self.sentence_onehot(input_sentence)
-            return self.decode_sequence(sequence[0])
+            return self.decode_sequence(sequence)
         except Exception as e:
             raise CustomException(e,sys)    
             
